@@ -124,8 +124,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'anokhaworld123@gmail.com'  # Replace with your email
-EMAIL_HOST_PASSWORD = 'lwkz oucz apqv ekfq'  # Replace with your email password
+EMAIL_HOST_USER = 'coin.inventory.management.system@gmail.com'  # Replace with your email
+EMAIL_HOST_PASSWORD = 'nbge nlnr jyqo mtba'  # Replace with your email password
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/

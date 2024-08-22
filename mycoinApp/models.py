@@ -69,3 +69,12 @@ class Contact(models.Model):
     email = models.EmailField()  
     mobile_number = models.CharField(max_length=10) 
     message = models.CharField( max_length=250)
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField()
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at

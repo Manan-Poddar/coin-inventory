@@ -5,7 +5,7 @@ from authentication.forms import *
 from django.core.mail import send_mail
 import random
 import base64
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from mycoinApp.models import *
 from authentication.models import *
 from django.shortcuts import get_object_or_404
@@ -13,13 +13,23 @@ from django.contrib.auth.hashers import make_password
 from django.db.models import Min
 from urllib.parse import unquote
 from django.db.models import F
+import secrets
+import string
+from datetime import timedelta
 
 
 def generate_otp():
     return random.randint(100000, 999999)
 
-def send_email(email, msg):
-    subject = 'Your OTP Code'
+def generate_token():
+    characters = string.ascii_letters + string.digits
+    # Generate a secure random token
+    token = ''.join(secrets.choice(characters) for _ in range(25))
+    return token
+
+def send_email(email, msg, subject):
+    print(email, msg)
+    subject = subject
     message = msg
     email_from = 'your_email@gmail.com'  
     recipient_list = [email]
@@ -58,7 +68,7 @@ def login(request):
         # if check_password(password, user.password): 
         if password == user.password:
             otp = generate_otp()
-            send_email(email, f'Your OTP code is {otp}.')
+            send_email(email, f'Your OTP code is {otp}.', 'Your OTP code')
             user.otp = otp
             user.save()
             request.session['otp'] = otp
@@ -67,7 +77,7 @@ def login(request):
             request.session['user_id'] = user.id 
             return redirect('otp-verification')
         else:
-            messages.error(request, "No devices found for the specified farm.")
+            messages.error(request, "Credentials are wrong")
             return redirect('login')
     return render(request, 'login.html')
 
@@ -296,8 +306,47 @@ def ContactRequest(request):
         msg = request.POST.get('msg')
         contactrequest = Contact.objects.create(name=name, email=email,  mobile_number=contact, message=msg)
         contactrequest.save()
-        send_email('gargvishv77@gmail.com', f'{name} {email} {contact} {msg}.')
+        send_email(email, f'{name} {email} {contact} {msg}.', 'Contact Request')
         return JsonResponse({'success': True})
 
     else:
         return render(request, 'contact.html')
+
+
+def ForgotPassword(request):
+    email = request.GET.get('email', '')
+    user = get_object_or_404(User, email=email)
+    token = generate_token()
+    print(token)
+    reset_link = f"http://127.0.0.1:8000/reset_password/{token}/"
+    send_email(email, f"You can reset your Password by click on this link {reset_link}", 'Reset Password Link')
+    PasswordResetToken.objects.create(
+        user=user,
+        token=token,
+        expires_at=timezone.now() + timedelta(hours=1)  # Token valid for 1 hour
+    )
+    return render(request, 'forgot_password.html')
+
+
+def ResetPassword(request, token):
+    
+    token_obj = get_object_or_404(PasswordResetToken, token=token)
+    user = get_object_or_404(User, id=token_obj.user.id)
+
+    if token_obj.is_expired():
+        return HttpResponse("This link has expired.", status=400)
+    
+    if request.method == "POST":
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        print(new_password, confirm_password)
+        if new_password == confirm_password:
+            print("hello")
+            user.password = new_password
+            user.save()
+            token_obj.delete()  # Token used, delete it
+            return HttpResponse("Password has been reset successfully.")
+        else:
+            return HttpResponse("Passwords do not match.", status=400)
+        
+    return render(request, 'reset_password.html', {'token': token})
