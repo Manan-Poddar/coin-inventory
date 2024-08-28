@@ -16,7 +16,7 @@ from django.db.models import F
 import secrets
 import string
 from datetime import timedelta
-
+import csv
 
 def generate_otp():
     return random.randint(100000, 999999)
@@ -156,7 +156,24 @@ def coins(request, id):
         coinid.append(i.id)
     
     data = CoinStateCondition.objects.filter(coin__in=coinid)
+    if request.GET.get('download') == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="coin_details.csv"'
 
+        writer = csv.writer(response)
+        writer.writerow(['Denomination', 'Description', 'Metal', 'Year', 'State', 'Condition'])
+
+        for item in data:
+            writer.writerow([
+                item.coin.denomination,
+                item.coin.description,
+                item.coin.metal,
+                item.coin.year,
+                item.state.name,
+                item.condition.name
+            ])
+
+        return response
     context={
         'data':data,
         'current_url': request.get_full_path(),
