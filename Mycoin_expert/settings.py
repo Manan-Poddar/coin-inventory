@@ -33,6 +33,7 @@ CSRF_TRUSTED_ORIGINS = ['https://127.0.0.1:8000/']
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,8 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'mycoinApp',
     'authentication',
-    'channels',
-    #'chat',
+    'chat'
 ]
 
 
@@ -74,8 +74,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'Mycoin_expert.wsgi.application'
+# WSGI_APPLICATION = 'Mycoin_expert.wsgi.application'
 ASGI_APPLICATION = 'Mycoin_expert.asgi.application'
+# daphne -p 8000 Mycoin_expert.asgi:application 
 
 
 # Database
@@ -113,12 +114,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# TIME_ZONE = 'UTC'
 
-USE_I18N = True
+# USE_I18N = True
 
 USE_TZ = True
 
+TIME_ZONE = 'Asia/Kolkata'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -133,6 +135,7 @@ EMAIL_HOST_PASSWORD = 'nbge nlnr jyqo mtba'  # Replace with your email password
 STATIC_URL = 'static/'
 STATICFILES_DIRS=[os.path.join(BASE_DIR,"static")]
 
+MEDIA_URL = '/media/'
 MEDIA_ROOT=os.path.join(BASE_DIR,'static')
 
 # Default primary key field type
@@ -155,3 +158,9 @@ except Exception as e:
 
 # >>>>>> cryptography. >>>>>>
 ENCRYPT_KEY = b'5AGKRSbx5REXJ9X_1wHi8wpUpjquyk5hG1rUVbJZoeQ='
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
