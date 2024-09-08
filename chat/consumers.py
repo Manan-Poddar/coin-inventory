@@ -34,19 +34,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
             user = await self.get_user(user_id)
             chat = await self.get_chat(self.chat_id)
             print(user, "user",   ">>>>>>", chat, "Chat")
-            message_obj = await self.save_message(chat, user, message)
-            print("Message Object:- ",message_obj)
+            if chat:
+                other_user = chat.user2 if chat.user1 == user else chat.user1
+                # Create or retrieve both chat directions
+                chat1, chat2 = await self.get_or_create_chats(user, other_user)
 
-            await self.channel_layer.group_send(
-                self.chat_group_name,
-                {
-                    'type': 'chat_message',
-                    'message': message_obj.content,
-                    'user': user.first_name,
-                    'user_id': user.id,  
-                    'timestamp': str(message_obj.timestamp)
-                }
-            )
+                # Save the message to both chats
+                message_obj1, message_obj2 = await self.save_message_to_both_chats(chat1, chat2, user, message)
+                print("Message Object 1:", message_obj1)
+                print("Message Object 2:", message_obj2)
+
+                # Send the message to the WebSocket group
+                await self.channel_layer.group_send(
+                    self.chat_group_name,
+                    {
+                        'type': 'chat_message',
+                        'message': message_obj1.content,
+                        'user': user.first_name,
+                        'user_id': user.id,
+                        'timestamp': str(message_obj1.timestamp)
+                    }
+                )
+            else:
+                print(f"Chat with id {self.chat_id} does not exist.")
         except Exception as e:
             print(f"Error in receive: {e}")
 
@@ -80,12 +90,33 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return chat
         except Chat.DoesNotExist:
             return None
+    
 
     @sync_to_async
-    def save_message(self, chat, user, content):
+    def get_or_create_chats(self, user1, user2):
+        from .models import Chat
+
+        chat1, created1 = Chat.objects.get_or_create(user1=user1, user2=user2)
+        chat2, created2 = Chat.objects.get_or_create(user1=user2, user2=user1)
+
+        return chat1, chat2
+
+
+
+    @sync_to_async
+    def save_message_to_both_chats(self, chat1, chat2, user, content):
         from .models import Message
-        print(chat, "save Messagew ")
-        msg = Message.objects.create(chat=chat, sender=user, content=content)
-        msg = Message.objects.create(chat=chat, sender=user, content=content)
-        return msg
+
+        msg1 = Message.objects.create(chat=chat1, sender=user, content=content)
+        msg2 = Message.objects.create(chat=chat2, sender=user, content=content)
+
+        return msg1, msg2
+
+    # @sync_to_async
+    # def save_message(self, chat, user, content):
+    #     from .models import Message
+    #     print(chat, "save Messagew ")
+    #     msg = Message.objects.create(chat=chat, sender=user, content=content)
+    #     msg = Message.objects.create(chat=chat, sender=user, content=content)
+    #     return msg
 

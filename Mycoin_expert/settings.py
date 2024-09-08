@@ -76,7 +76,7 @@ TEMPLATES = [
 
 # WSGI_APPLICATION = 'Mycoin_expert.wsgi.application'
 ASGI_APPLICATION = 'Mycoin_expert.asgi.application'
-# daphne -p 8000 Mycoin_expert.asgi:application 
+# daphne -p 8001 Mycoin_expert.asgi:application 
 
 
 # Database
